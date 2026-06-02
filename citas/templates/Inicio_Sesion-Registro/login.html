@@ -26,16 +26,10 @@
 
                     {% if messages %}
                     {% for message in messages %}
-                    <div class="msg msg--error">
+                    <div class="msg {% if message.tags == 'success' %}msg--success{% else %}msg--error{% endif %}">
                         <span>{{ message }}</span>
                     </div>
                     {% endfor %}
-                    {% endif %}
-
-                    {% if 'registro' in request.GET %}
-                    <div class="msg msg--success">
-                        <span>¡Registro exitoso! Ahora puedes iniciar sesión.</span>
-                    </div>
                     {% endif %}
 
                     <div class="label">
