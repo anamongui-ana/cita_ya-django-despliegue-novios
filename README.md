@@ -29,4 +29,8 @@
    print("Listo!")
 ```
 
+<<<<<<< HEAD
 **Credenciales de prueba:** contraseña `Admincitaya0*` para todos los usuarios.
+=======
+**Credenciales de prueba:** contraseña `Admincitaya0*` para todos los usuarios.# cita_ya-django-despliegue-novios
+>>>>>>> 28e3167ea7fb8d2a02427228fb1fdd6982f451bf
