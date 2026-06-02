@@ -561,14 +561,28 @@ input.error {
    ERROR DEL SERVIDOR (mensajes Django)
    ══════════════════════════════════════════ */
 .server-error-box {
-    background: var(--error-bg);
-    color: var(--error-text);
-    border: 1px solid var(--error-border);
     border-radius: var(--radius-sm);
     padding: 0.62rem 1rem;
     font-size: 0.77rem;
     margin-bottom: 1rem;
     grid-column: 1 / -1;
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+}
+
+.server-error-box .msg-error {
+    color: var(--error-text);
+}
+
+.server-error-box .msg-success {
+    color: #166534;
+}
+
+.server-error-box:has(.msg-success) {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
 }
 
 /* ══════════════════════════════════════════

@@ -144,37 +144,78 @@ def login(request):
 
 def registro(request):
     if request.method == 'POST':
+        tipo_doc         = request.POST.get('tipo_doc', '').strip()
+        numero_doc       = request.POST.get('numero_doc', '').strip()
+        nombre           = request.POST.get('nombre', '').strip()
+        apellido         = request.POST.get('apellido', '').strip()
+        genero           = request.POST.get('genero', '').strip()
+        fecha_nacimiento = request.POST.get('fecha_nacimiento', '').strip()
+        tipo_sangre      = request.POST.get('tipo_sangre', '').strip()
+        telefono         = request.POST.get('telefono', '').strip()
+        correo           = request.POST.get('correo', '').strip()
+        direccion        = request.POST.get('direccion', '').strip()
+        contrasena       = request.POST.get('contrasena', '').strip()
+        confirmar        = request.POST.get('confirmar_contrasena', '').strip()
+
+        # ── Validación de campos obligatorios ──────────────────────────────
+        campos_requeridos = {
+            'tipo_doc': tipo_doc,
+            'numero_doc': numero_doc,
+            'nombre': nombre,
+            'apellido': apellido,
+            'genero': genero,
+            'fecha_nacimiento': fecha_nacimiento,
+            'tipo_sangre': tipo_sangre,
+            'telefono': telefono,
+            'correo': correo,
+            'direccion': direccion,
+            'contrasena': contrasena,
+        }
+        if any(v == '' for v in campos_requeridos.values()):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        if contrasena != confirmar:
+            messages.error(request, 'Las contraseñas no coinciden.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        if len(contrasena) < 10:
+            messages.error(request, 'La contraseña debe tener al menos 10 caracteres.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        if not numero_doc.isdigit():
+            messages.error(request, 'El número de documento solo puede contener números.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        if not telefono.isdigit() or len(telefono) != 10:
+            messages.error(request, 'El teléfono debe tener exactamente 10 dígitos numéricos.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        # ── Unicidad ───────────────────────────────────────────────────────
+        if Paciente.objects.filter(numero_doc=numero_doc).exists():
+            messages.error(request, 'Ya existe un usuario con ese número de documento.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        if Paciente.objects.filter(correo=correo).exists():
+            messages.error(request, 'Ya existe un usuario con ese correo electrónico.')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
+
+        # ── Guardar ────────────────────────────────────────────────────────
         try:
-            tipo_doc         = request.POST.get('tipo_doc')
-            numero_doc       = request.POST.get('numero_doc')
-            nombre           = request.POST.get('nombre')
-            apellido         = request.POST.get('apellido')
-            genero           = request.POST.get('genero')
-            fecha_nacimiento = request.POST.get('fecha_nacimiento')
-            tipo_sangre      = request.POST.get('tipo_sangre')
-            telefono         = request.POST.get('telefono')
-            correo           = request.POST.get('correo')
-            direccion        = request.POST.get('direccion')
-            contrasena       = request.POST.get('contrasena')
-
-            if Paciente.objects.filter(numero_doc=numero_doc).exists():
-                messages.error(request, 'Ya existe un usuario con ese documento.')
-                return redirect('registro')
-
             Paciente.objects.create(
                 tipo_doc=tipo_doc, numero_doc=numero_doc, nombre=nombre,
                 apellido=apellido, genero=genero, fecha_nacimiento=fecha_nacimiento,
                 tipo_sangre=tipo_sangre, telefono=telefono, correo=correo,
                 direccion=direccion,
-                contrasena=make_password(contrasena),  # ✅ hashea la contraseña
+                contrasena=make_password(contrasena),
                 estado=True
             )
             messages.success(request, 'Registro exitoso. Ahora puedes iniciar sesión.')
             return redirect('login')
 
         except Exception as e:
-            messages.error(request, f'Error: {str(e)}')
-            return redirect('registro')
+            messages.error(request, f'Error al registrar: {str(e)}')
+            return render(request, 'Inicio_Sesion-Registro/registrar.html', {'post': request.POST})
 
     return render(request, 'Inicio_Sesion-Registro/registrar.html')
 
