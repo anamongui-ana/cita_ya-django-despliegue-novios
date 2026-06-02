@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image" href="{% static 'assets/img/logoti.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/login.css?v=1.1' %}">
+    <title>Cita Ya - Iniciar Sesión</title>
+</head>
+
+<body class="body">
+
+    <div class="container_login">
+
+        <div class="apartado_1">
+            <div class="container_login-form">
+
+                <div class="logo-name">
+                    <img src="{% static 'assets/img/nombre.png' %}">
+                </div>
+
+                <form class="container_formulario-login" method="POST" action="{% url 'login' %}" novalidate>
+                    {% csrf_token %}
+
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="msg msg--error">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if 'registro' in request.GET %}
+                    <div class="msg msg--success">
+                        <span>¡Registro exitoso! Ahora puedes iniciar sesión.</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="label">
+                        <label class="text" for="numero">Número de documento</label>
+                    </div>
+                    <div class="input">
+                        <input type="text" id="numero" name="numerodoc" inputmode="numeric" placeholder="Ej: 1234567890"
+                            autocomplete="username" required>
+                        <small id="errorDocumento" class="field-error" style="display:none; color:red;"></small>
+                    </div>
+
+                    <div class="label">
+                        <label class="text" for="clave">Contraseña</label>
+                    </div>
+                    <div class="input">
+                        <div class="input-password-container">
+                            <input type="password" id="clave" name="contrasena" placeholder="••••••••"
+                                autocomplete="current-password" required>
+                            <span class="toggle-password" id="toggleEye" style="cursor:pointer;">
+                                <svg id="eyeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </span>
+                        </div>
+                        <small id="errorContrasena" class="field-error" style="display:none; color:red;"></small>
+                    </div>
+
+                    <button type="submit" class="login_button">Iniciar Sesión</button>
+
+                    <div class="cuenta">
+                        <a href="{% url 'solicitar_reset' %}">¿Olvidaste tu contraseña?</a>
+                    </div>
+
+                    <div class="no-cuenta">
+                        <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a></p>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        <div class="apartado_2">
+            <div class="emoji-icon">
+                <img src="{% static 'assets/img/bienvenida.png' %}">
+            </div>
+            <div class="h1-info">
+                <h1>¡Bienvenido!</h1>
+            </div>
+            <div class="P-info">
+                <p>Accede a tu portal médico y gestiona tus citas de forma fácil y segura</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const numInput = document.getElementById('numero');
+        const claveInput = document.getElementById('clave');
+        const errDoc = document.getElementById('errorDocumento');
+        const errPass = document.getElementById('errorContrasena');
+        const toggleBtn = document.getElementById('toggleEye');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const form = document.querySelector('.container_formulario-login');
+
+        /* ── Toggle contraseña ── */
+        const SVG_OPEN = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+        const SVG_CLOSE = `<line x1="17.94" y1="17.94" x2="6.06" y2="6.06"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A13.4 13.4 0 0 0 1 12s4 8 11 8a13.2 13.2 0 0 0 5.36-1.12"/><circle cx="12" cy="12" r="3"/>`;
+
+        toggleBtn.addEventListener('click', () => {
+            const isPass = claveInput.type === 'password';
+            claveInput.type = isPass ? 'text' : 'password';
+            eyeIcon.innerHTML = isPass ? SVG_CLOSE : SVG_OPEN;
+        });
+
+        /* ── Solo números en documento ── */
+        numInput.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '');
+        });
+
+        /* ── Validación al enviar ── */
+        form.addEventListener('submit', function (e) {
+            let hasError = false;
+
+            // Validar Documento (Ej: entre 6 y 10 dígitos)
+            if (numInput.value.length < 6 || numInput.value.length > 10) {
+                errDoc.textContent = 'El documento debe tener entre 6 y 10 dígitos';
+                errDoc.style.display = 'block';
+                numInput.classList.add('input--error');
+                hasError = true;
+            } else {
+                errDoc.style.display = 'none';
+                numInput.classList.remove('input--error');
+            }
+
+            // Validar Clave (Mínimo 10 caracteres)
+            if (claveInput.value.length < 10) {
+                errPass.textContent = 'La contraseña debe tener al menos 10 caracteres';
+                errPass.style.display = 'block';
+                claveInput.classList.add('input--error');
+                hasError = true;
+            } else {
+                errPass.style.display = 'none';
+                claveInput.classList.remove('input--error');
+            }
+
+            if (hasError) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>

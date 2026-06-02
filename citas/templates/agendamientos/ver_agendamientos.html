@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Agendamientos · CitaYa{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="fa-solid fa-calendar-check"></i> Agendamientos</h1>
+    <a href="{% url 'crear_agendamientos' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Nueva Cita
+    </a>
+</div>
+
+<div class="toolbar-reportes">
+    <form method="GET" action="{% url 'ver_agendamientos' %}" class="search-form">
+        <div class="search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" name="q" value="{{ q }}"
+                   placeholder="Buscar por tipo de cita, paciente, médico…"
+                   class="search-input" autocomplete="off">
+            {% if q %}
+                <a href="{% url 'ver_agendamientos' %}" class="search-clear"><i class="fa-solid fa-xmark"></i></a>
+            {% endif %}
+        </div>
+        <input type="hidden" name="tipo_cita"   value="{{ tipo_cita }}">
+        <input type="hidden" name="fecha_desde" value="{{ fecha_desde }}">
+        <input type="hidden" name="fecha_hasta" value="{{ fecha_hasta }}">
+        <button type="submit" class="btn btn-search">Buscar</button>
+    </form>
+
+    <button type="button" class="btn-filter-toggle {% if tipo_cita or fecha_desde or fecha_hasta %}active{% endif %}"
+            id="filterToggleBtn" onclick="toggleFilterPanel()">
+        <i class="fa-solid fa-sliders"></i> Filtros
+        <span class="filter-count {% if tipo_cita or fecha_desde or fecha_hasta %}show{% endif %}" id="filterCount"></span>
+    </button>
+
+    <div class="reporte-btns">
+        <a href="{% url 'reporte_agendamientos' %}?tipo=pdf&q={{ q }}&tipo_cita={{ tipo_cita }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+           target="_blank" class="btn btn-reporte btn-pdf">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+        </a>
+        <a href="{% url 'reporte_agendamientos' %}?tipo=excel&q={{ q }}&tipo_cita={{ tipo_cita }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+           class="btn btn-reporte btn-excel">
+            <i class="fa-solid fa-file-excel"></i> Excel
+        </a>
+    </div>
+</div>
+
+<div class="filter-panel {% if tipo_cita or fecha_desde or fecha_hasta %}open{% endif %}" id="filterPanel">
+    <div class="filter-panel-title"><i class="fa-solid fa-sliders"></i> Filtros avanzados</div>
+    <form method="GET" action="{% url 'ver_agendamientos' %}" id="filterForm">
+        <input type="hidden" name="q" value="{{ q }}">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>Tipo de cita</label>
+                <select name="tipo_cita" onchange="updateBadgeCount()">
+                    <option value="">Todos</option>
+                    {% for tc in tipos_cita %}
+                        <option value="{{ tc }}" {% if tipo_cita == tc %}selected{% endif %}>{{ tc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Fecha desde</label>
+                <input type="date" name="fecha_desde" value="{{ fecha_desde }}" onchange="updateBadgeCount()">
+            </div>
+            <div class="filter-group">
+                <label>Fecha hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" onchange="updateBadgeCount()">
+            </div>
+        </div>
+        <div class="filter-actions">
+            <a href="{% url 'ver_agendamientos' %}{% if q %}?q={{ q }}{% endif %}" class="btn-reset-filters">
+                <i class="fa-solid fa-rotate-left"></i> Limpiar filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-magnifying-glass"></i> Aplicar
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if q or tipo_cita or fecha_desde or fecha_hasta %}
+<div class="active-filters-row show">
+    <span>Filtros activos:</span>
+    {% if q %}
+        <span class="active-badge">
+            Búsqueda: "{{ q }}"
+            <a href="?tipo_cita={{ tipo_cita }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"><button>×</button></a>
+        </span>
+    {% endif %}
+    {% if tipo_cita %}
+        <span class="active-badge">
+            Tipo: {{ tipo_cita }}
+            <a href="?q={{ q }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"><button>×</button></a>
+        </span>
+    {% endif %}
+    {% if fecha_desde %}
+        <span class="active-badge">
+            Desde: {{ fecha_desde }}
+            <a href="?q={{ q }}&tipo_cita={{ tipo_cita }}&fecha_hasta={{ fecha_hasta }}"><button>×</button></a>
+        </span>
+    {% endif %}
+    {% if fecha_hasta %}
+        <span class="active-badge">
+            Hasta: {{ fecha_hasta }}
+            <a href="?q={{ q }}&tipo_cita={{ tipo_cita }}&fecha_desde={{ fecha_desde }}"><button>×</button></a>
+        </span>
+    {% endif %}
+    <a href="{% url 'ver_agendamientos' %}" class="btn-reset-filters">Limpiar todo</a>
+</div>
+<p class="search-info">{{ citas|length }} registro(s) encontrado(s).</p>
+{% endif %}
+
+<div class="card">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th><th>Tipo de Cita</th><th>Fecha</th><th>Hora</th>
+                    <th>Paciente</th><th>Médico</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cita in citas %}
+                <tr>
+                    <td style="color:var(--text-muted)">{{ cita.id_agendamiento }}</td>
+                    <td>{{ cita.cita }}</td>
+                    <td>{{ cita.fecha }}</td>
+                    <td>
+                        <span class="badge" style="background:rgba(0,163,200,0.1);color:#00b4d8;border:1px solid rgba(0,180,216,0.2)">
+                            {{ cita.hora }}
+                        </span>
+                    </td>
+                    <td>{{ cita.id_paciente.nombre }} {{ cita.id_paciente.apellido }}</td>
+                    <td>Dr. {{ cita.id_medico.nombre }} {{ cita.id_medico.apellido }}</td>
+                    <td>
+                        <div class="td-actions">
+                            <a href="{% url 'editar_agendamientos' cita.pk %}" class="btn btn-sm btn-edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <a href="{% url 'eliminar_agendamientos' cita.pk %}" class="btn btn-sm btn-del">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="ei">📅</div>
+                            <p>No se encontraron resultados.<br>
+                               <a href="{% url 'ver_agendamientos' %}" style="color:var(--accent)">Ver todas</a>
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function toggleFilterPanel() {
+    document.getElementById('filterPanel').classList.toggle('open');
+    document.getElementById('filterToggleBtn').classList.toggle('active');
+}
+function updateBadgeCount() {
+    var count = 0;
+    document.querySelectorAll('#filterForm select').forEach(function(s) { if (s.value) count++; });
+    document.querySelectorAll('#filterForm input[type="date"]').forEach(function(i) { if (i.value) count++; });
+    var el = document.getElementById('filterCount');
+    el.textContent = count;
+    count > 0 ? el.classList.add('show') : el.classList.remove('show');
+}
+</script>
+
+{% endblock %}
